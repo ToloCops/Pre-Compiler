@@ -73,10 +73,10 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    size_t read_bytes = fread(code, 1, file_size, fp);
+    size_t read_bytes = fread(code, 1, file_size, fp); // Read the file and store it in code, returning the number of elements of size 1 (byte) read
     if (read_bytes != file_size)
     {
-        perror("Error reading input file");
+        perror("Error reading input file"); // This could be, for example, due to a modification of the file after seeking
         free(code);
         fclose(fp);
         exit(EXIT_FAILURE);

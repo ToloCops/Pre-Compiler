@@ -80,12 +80,12 @@ void print_statistics(const Stats *stats)
 */
 char *process_includes(const char *code, Stats *stats)
 {
-    size_t capacity = 1024;
+    size_t capacity = strlen(code) + 1;
     size_t length = 0;
     char *result = malloc(capacity);
     if (!result)
     {
-        fprintf(stderr, "Errore di allocazione memoria in process_includes\n");
+        fprintf(stderr, "Error allocating memory for result buffer\n");
         exit(EXIT_FAILURE);
     }
     result[0] = '\0';
@@ -98,11 +98,13 @@ char *process_includes(const char *code, Stats *stats)
         /* Estrai una riga (fino a newline o fine stringa) */
         size_t len = 0;
         const char *line_start = pos;
-        while (pos[len] && pos[len] != '\n')
+        while (pos[len] && pos[len] != '\n') {
             len++;
-        if (len >= sizeof(line))
-            len = sizeof(line) - 1;
-        strncpy(line, line_start, len);
+        }
+        if (len >= sizeof(line)) {
+            len = sizeof(line) - 1; // Truncate to fit, consider throwing an error =^.^=
+        }
+        strncpy(line, line_start, len); // Consider using memcpy instead  
         line[len] = '\0';
         pos = line_start + len;
         if (*pos == '\n')
