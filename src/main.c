@@ -10,13 +10,15 @@ int main(int argc, char *argv[])
     char *output_file = NULL;
 
     int verbose = 0;
-    int c;
 
     static struct option long_options[] = {
-        {"in", required_argument, 0, 'i'},
-        {"out", required_argument, 0, 'o'},
-        {"verbose", no_argument, 0, 'v'},
-        {0, 0, 0, 0}};
+        {"in",      required_argument, 0, 'i'},
+        {"out",     required_argument, 0, 'o'},
+        {"verbose", no_argument,       0, 'v'},
+        {0, 0, 0, 0}                             // Used to tell the compiler that this is the end of the options
+    };
+
+    int c;
 
     while ((c = getopt_long(argc, argv, "i:o:v", long_options, NULL)) != -1)
     {
@@ -31,14 +33,14 @@ int main(int argc, char *argv[])
         case 'v':
             verbose = 1;
             break;
-        case '?':
+        case '?': // Handle unknown options
         default:
-            fprintf(stderr, "Usage: %s --in <input_file> --out <output_file> [--verbose]\n", argv[0]);
+            fprintf(stderr, "Usage: %s --in <input_file> [--out <output_file>] [--verbose]\n", argv[0]);
             exit(EXIT_FAILURE);
         }
     }
 
-    if (input_file == NULL)
+    if (input_file == NULL) // Check if user provided input file without -i or --in
     {
         if (optind < argc)
         {
@@ -47,7 +49,7 @@ int main(int argc, char *argv[])
         else
         {
             fprintf(stderr, "Input file is required.\n");
-            fprintf(stderr, "Usage: %s [-v] -i file_input [-o file_output]\n", argv[0]);
+            fprintf(stderr, "Usage: %s --in <input_file> [--out <output_file>] [--verbose]\n", argv[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
     long file_size = ftell(fp);
     rewind(fp);
 
-    char *code = malloc(file_size + 1);
+    char *code = malloc(file_size + 1); // +1 for null terminator
     if (code == NULL)
     {
         perror("Error allocating memory for code");
