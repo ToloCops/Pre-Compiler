@@ -92,25 +92,35 @@ char *process_includes(const char *code, Stats *stats)
 
     const char *pos = code;
     char line[1024];
+    int line_num = 1;
 
     while (*pos)
     {
-        /* Estrai una riga (fino a newline o fine stringa) */
+
         size_t len = 0;
         const char *line_start = pos;
-        while (pos[len] && pos[len] != '\n') {
+        while (pos[len] && pos[len] != '\n')
+        {
             len++;
         }
-        if (len >= sizeof(line)) {
-            len = sizeof(line) - 1; // Truncate to fit, consider throwing an error =^.^=
+
+        if (len >= sizeof(line))
+        {
+            fprintf(stderr, "Warning (linea %d): linea troppo lunga, troncata a %zu caratteri:\n%.50s...\n", line_num, sizeof(line) - 1, line_start);
+            strncpy(line, line_start, sizeof(line) - 1);
+            line[sizeof(line) - 1] = '\0';
         }
-        strncpy(line, line_start, len); // Consider using memcpy instead  
-        line[len] = '\0';
+        else
+        {
+            strncpy(line, line_start, len);
+            line[len] = '\0';
+        }
+
         pos = line_start + len;
+
         if (*pos == '\n')
             pos++;
 
-        /* Se la riga inizia con "#include", processa il file incluso */
         if (strncmp(line, "#include", 8) == 0)
         {
             char filename[256];
@@ -190,6 +200,7 @@ char *process_includes(const char *code, Stats *stats)
             append_to_buffer(&result, &capacity, &length, line);
             append_to_buffer(&result, &capacity, &length, "\n");
         }
+        line_num++;
     }
     return result;
 }
