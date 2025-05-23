@@ -20,13 +20,24 @@ typedef struct
 
 } Stats;
 
+typedef struct IncludedFile {
+    char *filename;
+    struct IncludedFile *next;
+} IncludedFile;
+
 void init_stats(Stats *stats);
 
 void free_stats(Stats *stats);
 
 void print_statistics(const Stats *stats);
 
-char *process_includes(const char *code, Stats *stats);
+char *process_includes(const char *code, Stats *stats, IncludedFile **included_files);
+
+int is_file_already_included(IncludedFile *list, const char *filename);
+
+void add_included_file(IncludedFile **list, const char *filename);
+
+void free_included_files(IncludedFile *list);
 
 char *remove_comments(const char *code, Stats *stats);
 

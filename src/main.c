@@ -88,7 +88,9 @@ int main(int argc, char *argv[])
     Stats stats;
     init_stats(&stats);
 
-    char *code_with_includes = process_includes(code, &stats);
+    IncludedFile *included_files = NULL;
+    char *code_with_includes = process_includes(code, &stats, &included_files);
+    free_included_files(included_files);
     free(code);
 
     char *code_no_comments = remove_comments(code_with_includes, &stats);

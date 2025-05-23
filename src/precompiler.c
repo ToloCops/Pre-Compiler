@@ -73,12 +73,47 @@ void print_statistics(const Stats *stats)
     printf("File di output: %ld byte, %d righe\n", stats->output_file_size, stats->output_file_lines);
 }
 
+int is_file_already_included(IncludedFile *list, const char *filename) {
+    IncludedFile *current = list;
+    while (current) {
+        if (strcmp(current->filename, filename) == 0) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+void add_included_file(IncludedFile **list, const char *filename) {
+    if (is_file_already_included(*list, filename)) {
+        return; // Il file è già incluso
+    }
+    IncludedFile *new_file = malloc(sizeof(IncludedFile));
+    if (!new_file) {
+        fprintf(stderr, "Error allocating memory for included file\n");
+        exit(EXIT_FAILURE);
+    }
+    new_file->filename = duplicate_string(filename);
+    new_file->next = *list;
+    *list = new_file;
+}
+
+void free_included_files(IncludedFile *list) {
+    IncludedFile *current = list;
+    while (current) {
+        IncludedFile *next = current->next;
+        free(current->filename);
+        free(current);
+        current = next;
+    }
+}
+
 /*
    Funzione process_includes: analizza il codice riga per riga.
    Se trova una direttiva #include, estrae il nome del file (da virgolette o angolari),
    apre il file e ne copia il contenuto al posto della direttiva.
 */
-char *process_includes(const char *code, Stats *stats)
+char *process_includes(const char *code, Stats *stats, IncludedFile **included_files)
 {
     size_t capacity = strlen(code) + 1;
     size_t length = 0;
@@ -99,27 +134,25 @@ char *process_includes(const char *code, Stats *stats)
 
         size_t len = 0;
         const char *line_start = pos;
-        while (pos[len] && pos[len] != '\n')
-        {
+        while (pos[len] && pos[len] != '\n') {
             len++;
         }
 
-        if (len >= sizeof(line))
-        {
+        if (len >= sizeof(line)) {
             fprintf(stderr, "Warning (linea %d): linea troppo lunga, troncata a %zu caratteri:\n%.50s...\n", line_num, sizeof(line) - 1, line_start);
             strncpy(line, line_start, sizeof(line) - 1);
             line[sizeof(line) - 1] = '\0';
         }
-        else
-        {
+        else {
             strncpy(line, line_start, len);
             line[len] = '\0';
         }
 
-        pos = line_start + len;
+        pos = line_start + len; // Set pointer to the end of the line
 
-        if (*pos == '\n')
+        if (*pos == '\n') {
             pos++;
+        }
 
         if (strncmp(line, "#include", 8) == 0)
         {
@@ -128,7 +161,7 @@ char *process_includes(const char *code, Stats *stats)
             char *start = strchr(line, '\"');
             if (start)
             {
-                start++; // salta il primo "
+                start++;
                 char *end = strchr(start, '\"');
                 if (end)
                 {
@@ -146,7 +179,7 @@ char *process_includes(const char *code, Stats *stats)
                 start = strchr(line, '<');
                 if (start)
                 {
-                    start++; // salta <
+                    start++;
                     char *end = strchr(start, '>');
                     if (end)
                     {
@@ -162,11 +195,14 @@ char *process_includes(const char *code, Stats *stats)
             }
             if (found)
             {
+                if (is_file_already_included(*included_files, filename)) {
+                    continue;
+                }
+                add_included_file(included_files, filename);
                 FILE *fp = fopen(filename, "r");
                 if (fp)
                 {
                     stats->num_included_files++;
-                    /* Legge il contenuto del file incluso */
                     fseek(fp, 0, SEEK_END);
                     long fsize = ftell(fp);
                     rewind(fp);
@@ -177,14 +213,15 @@ char *process_includes(const char *code, Stats *stats)
                         file_content[read_bytes] = '\0';
                     }
                     fclose(fp);
-                    append_to_buffer(&result, &capacity, &length, file_content);
+                    char *include_free = process_includes(file_content, stats, included_files);  // Process the included file recursively
                     free(file_content);
-                    /* Aggiungiamo un newline per separare il contenuto */
+                    append_to_buffer(&result, &capacity, &length, include_free);
+                    free(include_free);
                     append_to_buffer(&result, &capacity, &length, "\n");
                 }
                 else
                 {
-                    fprintf(stderr, "Impossibile aprire il file incluso: %s\n", filename);
+                    fprintf(stderr, "Error opening file to include: %s\n", filename);
                 }
             }
             else
