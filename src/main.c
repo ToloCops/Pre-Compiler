@@ -93,10 +93,10 @@ int main(int argc, char *argv[])
     free_included_files(included_files);
     free(code);
 
+    check_identifiers(code_with_includes, &stats);
+    
     char *code_no_comments = remove_comments(code_with_includes, &stats);
     free(code_with_includes);
-
-    check_identifiers(code_no_comments, &stats);
 
     if (output_file)
     {

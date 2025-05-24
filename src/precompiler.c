@@ -303,152 +303,98 @@ char *remove_comments(const char *code, Stats *stats)
     return result;
 }
 
-/*
-   Funzione check_identifiers: analizza il codice per cercare dichiarazioni di variabili.
-   Per ogni parola chiave di tipo rilevata (ad esempio, int, char, float, ecc.), si aspetta che il token successivo
-   sia l'identificatore. Viene verificata la validità dell'identificatore e, in caso negativo, viene stampato un errore
-   e aggiornato il conteggio.
-   Questa implementazione è molto semplice e non gestisce casi complessi (ad esempio, dichiarazioni multiple in una riga).
-*/
-void check_identifiers(const char *code, Stats *stats)
-{
+int is_valid_identifier(const char *token) {
+    if (strchr(token, '-') != NULL)
+        return 0;
+    if (!(isalpha(token[0]) || token[0] == '_'))
+        return 0;
+    for (int i = 1; token[i] != '\0'; i++) {
+        if (!(isalnum(token[i]) || token[i] == '_'))
+            return 0;
+    }
+    return 1;
+}
+
+int is_type_keyword(const char *token) {
     const char *types[] = {"int", "char", "float", "double", "long", "short", "unsigned", NULL};
+    for (int i = 0; types[i] != NULL; i++) {
+        if (strcmp(token, types[i]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+void check_identifiers(const char *code, Stats *stats) {
     char token[256];
     int token_index = 0;
     int expecting_identifier = 0;
     int line_number = 1;
 
-    for (const char *p = code; *p != '\0'; p++)
-    {
-        if (*p == '\n')
-            line_number++;
+    for (const char *p = code; *p != '\0'; p++) {
+        if (*p == '\n') line_number++;
 
-        if (isspace(*p))
-        {
-            if (token_index > 0)
-            {
+        if (isspace(*p)) {
+            if (token_index > 0) {
                 token[token_index] = '\0';
-                if (expecting_identifier)
-                {
-                    /* Qui controlliamo se lo spazio dopo l'identificatore è seguito da '='.
-                       Scorriamo tutti gli spazi e verifichiamo il primo carattere non spazio. */
-                    const char *q = p;
-                    while (isspace(*q))
-                        q++;
-                    if (*q != '=' && *q != ';' && *q != ',')
-                    {
-                        stats->num_errors++;
-                        printf("Errore: dopo l'identificatore '%s' alla linea %d sono presenti spazi non seguiti da '=' o da un delimitatore valido (';' o ',')\n",
-                               token, line_number);
-                    }
-                    /* Eseguiamo la validazione classica dell'identificatore */
-                    int valid = 1;
-                    if (strchr(token, '-') != NULL)
-                        valid = 0;
-                    if (!(isalpha(token[0]) || token[0] == '_'))
-                        valid = 0;
-                    for (int i = 1; token[i] != '\0'; i++)
-                    {
-                        if (!(isalnum(token[i]) || token[i] == '_'))
-                            valid = 0;
-                    }
+
+                if (expecting_identifier) {
                     stats->num_variables++;
-                    if (!valid)
-                    {
+                    if (!is_valid_identifier(token)) {
                         stats->num_errors++;
                         printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
                     }
-                    expecting_identifier = 0;
+                    // Mantieni expecting_identifier attivo (potrebbe esserci ',')
+                } else if (is_type_keyword(token)) {
+                    expecting_identifier = 1;
                 }
-                else
-                {
-                    /* Se non stiamo aspettando un identificatore, controlla se il token corrisponde a una parola chiave di tipo */
-                    for (int i = 0; types[i] != NULL; i++)
-                    {
-                        if (strcmp(token, types[i]) == 0)
-                        {
-                            expecting_identifier = 1;
-                            break;
-                        }
-                    }
-                }
+
                 token_index = 0;
             }
             continue;
         }
 
-        /* Se il carattere è parte di un token (lettera, cifra, underscore o trattino) */
-        if (isalnum(*p) || *p == '_' || *p == '-')
-        {
-            token[token_index++] = *p;
-            if (token_index >= (int)sizeof(token) - 1)
-                token_index = sizeof(token) - 2;
-        }
-        else
-        {
-            /* Se incontriamo un delimitatore diverso (ad esempio, punteggiatura) completiamo il token */
-            if (token_index > 0)
-            {
+        if (isalnum(*p) || *p == '_' || *p == '-') {
+            if (token_index < (int)sizeof(token) - 1)
+                token[token_index++] = *p;
+        } else {
+            if (token_index > 0) {
                 token[token_index] = '\0';
-                if (expecting_identifier)
-                {
-                    /* Non abbiamo spazi intermedi, ma controlliamo comunque il token */
-                    int valid = 1;
-                    if (strchr(token, '-') != NULL)
-                        valid = 0;
-                    if (!(isalpha(token[0]) || token[0] == '_'))
-                        valid = 0;
-                    for (int i = 1; token[i] != '\0'; i++)
-                    {
-                        if (!(isalnum(token[i]) || token[i] == '_'))
-                            valid = 0;
-                    }
+
+                if (expecting_identifier) {
                     stats->num_variables++;
-                    if (!valid)
-                    {
+                    if (!is_valid_identifier(token)) {
                         stats->num_errors++;
                         printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
                     }
-                    expecting_identifier = 0;
+                } else if (is_type_keyword(token)) {
+                    expecting_identifier = 1;
                 }
-                else
-                {
-                    for (int i = 0; types[i] != NULL; i++)
-                    {
-                        if (strcmp(token, types[i]) == 0)
-                        {
-                            expecting_identifier = 1;
-                            break;
-                        }
-                    }
-                }
+
                 token_index = 0;
+            }
+
+            // Gestione dei delimitatori
+            if (*p == ',') {
+                // Continuiamo ad aspettare un identificatore
+                continue;
+            } else if (*p == ';') {
+                expecting_identifier = 0;
+            } else {
+                // '=' o altro → ignora
             }
         }
     }
 
-    /* Gestione di un eventuale token residuo */
-    if (token_index > 0)
-    {
+    // Gestione token residuo
+    if (token_index > 0) {
         token[token_index] = '\0';
-        if (expecting_identifier)
-        {
-            int valid = 1;
-            if (strchr(token, '-') != NULL)
-                valid = 0;
-            if (!(isalpha(token[0]) || token[0] == '_'))
-                valid = 0;
-            for (int i = 1; token[i] != '\0'; i++)
-            {
-                if (!(isalnum(token[i]) || token[i] == '_'))
-                    valid = 0;
-            }
+        if (expecting_identifier) {
             stats->num_variables++;
-            if (!valid)
-            {
+            if (!is_valid_identifier(token)) {
                 stats->num_errors++;
                 printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
             }
         }
     }
 }
+
