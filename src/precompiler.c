@@ -264,97 +264,92 @@ char *remove_comments(const char *code, Stats *stats)
     return result;
 }
 
-int is_valid_identifier(const char *token) {
-    if (strchr(token, '-') != NULL)
-        return 0;
-    if (!(isalpha(token[0]) || token[0] == '_'))
-        return 0;
-    for (int i = 1; token[i] != '\0'; i++) {
-        if (!(isalnum(token[i]) || token[i] == '_'))
-            return 0;
-    }
-    return 1;
-}
-
-int is_type_keyword(const char *token) {
-    const char *types[] = {"int", "char", "float", "double", "long", "short", "unsigned", NULL};
-    for (int i = 0; types[i] != NULL; i++) {
-        if (strcmp(token, types[i]) == 0)
-            return 1;
-    }
-    return 0;
-}
-
 void check_identifiers(const char *code, Stats *stats) {
     char token[256];
     int token_index = 0;
-    int expecting_identifier = 0;
     int line_number = 1;
+    ParserState state = START;
+    int in_typedef = 0;
 
     for (const char *p = code; *p != '\0'; p++) {
         if (*p == '\n') line_number++;
 
-        if (isspace(*p)) {
-            if (token_index > 0) {
-                token[token_index] = '\0';
-
-                if (expecting_identifier) {
-                    stats->num_variables++;
-                    if (!is_valid_identifier(token)) {
-                        stats->num_errors++;
-                        printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
-                    }
-                    // Mantieni expecting_identifier attivo (potrebbe esserci ',')
-                } else if (is_type_keyword(token)) {
-                    expecting_identifier = 1;
-                }
-
-                token_index = 0;
-            }
-            continue;
-        }
-
+        // Costruzione del token
         if (isalnum(*p) || *p == '_' || *p == '-') {
             if (token_index < (int)sizeof(token) - 1)
                 token[token_index++] = *p;
-        } else {
-            if (token_index > 0) {
-                token[token_index] = '\0';
+            continue;
+        }
 
-                if (expecting_identifier) {
+        // Puntatore come parte del tipo: lo ignoriamo nel nome ma influenzerà lo stato
+        if (*p == '*') {
+            if (state == TYPE) {
+                continue; // ignora ma resta in TYPE
+            }
+        }
+
+        // Fine token
+        if (token_index > 0) {
+            token[token_index] = '\0';
+            token_index = 0;
+
+            // Gestione typedef
+            if (strcmp(token, "typedef") == 0) {
+                in_typedef = 1;
+                state = TYPE;
+                continue;
+            }
+
+            switch (state) {
+                case START:
+                case TYPE:
+                    if (is_type(token)) {
+                        state = TYPE;
+                    } else {
+                        state = START;
+                    }
+                    break;
+
+                case EXPECT_ID:
                     stats->num_variables++;
                     if (!is_valid_identifier(token)) {
                         stats->num_errors++;
                         printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
                     }
-                } else if (is_type_keyword(token)) {
-                    expecting_identifier = 1;
-                }
 
-                token_index = 0;
-            }
+                    if (in_typedef) {
+                        add_custom_type(token);
+                        in_typedef = 0;
+                        state = START;
+                    } else {
+                        state = AFTER_ID;
+                    }
+                    break;
 
-            // Gestione dei delimitatori
-            if (*p == ',') {
-                // Continuiamo ad aspettare un identificatore
-                continue;
-            } else if (*p == ';') {
-                expecting_identifier = 0;
-            } else {
-                // '=' o altro → ignora
+                case AFTER_ID:
+                case SKIP_INIT:
+                    // Ignora token in questi stati
+                    break;
             }
         }
-    }
 
-    // Gestione token residuo
-    if (token_index > 0) {
-        token[token_index] = '\0';
-        if (expecting_identifier) {
-            stats->num_variables++;
-            if (!is_valid_identifier(token)) {
-                stats->num_errors++;
-                printf("Errore: identificatore non valido '%s' alla linea %d\n", token, line_number);
-            }
+        // Gestione simboli
+        switch (*p) {
+            case ';':
+                state = START;
+                break;
+            case ',':
+                if (state == AFTER_ID || state == SKIP_INIT)
+                    state = EXPECT_ID;
+                break;
+            case '=':
+                if (state == AFTER_ID)
+                    state = SKIP_INIT;
+                break;
+            default:
+                if (state == TYPE)
+                    state = EXPECT_ID;
+                break;
         }
     }
 }

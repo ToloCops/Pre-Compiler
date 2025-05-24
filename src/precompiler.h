@@ -2,6 +2,7 @@
 #define PRECOMPILER_H
 
 #include "include_helper.h"
+#include "identifier_helper.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,9 +36,5 @@ char *process_includes(const char *code, Stats *stats, IncludedFile **included_f
 char *remove_comments(const char *code, Stats *stats);
 
 void check_identifiers(const char *code, Stats *stats);
-
-int is_valid_identifier(const char *token);
-
-int is_type_keyword(const char *token);
 
 #endif /* PRECOMPILER_H */
