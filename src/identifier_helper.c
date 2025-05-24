@@ -20,14 +20,6 @@ int is_custom_type(const char *token) {
     return 0;
 }
 
-int is_custom_type(const char *token) {
-    for (int i = 0; i < custom_type_count; i++) {
-        if (strcmp(token, custom_types[i]) == 0)
-            return 1;
-    }
-    return 0;
-}
-
 void add_custom_type(const char *token) {
     if (custom_type_count < MAX_CUSTOM_TYPES) {
         custom_types[custom_type_count++] = strdup(token);
