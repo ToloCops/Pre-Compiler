@@ -1,5 +1,15 @@
 #include "include_helper.h"
 
+char* duplicate_string(const char *s) {
+    if (s == NULL) return NULL;
+    size_t len = strlen(s) + 1;
+    char *copy = malloc(len);
+    if (copy != NULL) {
+        memcpy(copy, s, len);
+    }
+    return copy;
+}
+
 int is_file_already_included(IncludedFile *list, const char *filename) {
     IncludedFile *current = list;
     while (current) {

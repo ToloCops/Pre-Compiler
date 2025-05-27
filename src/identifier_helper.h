@@ -10,9 +10,6 @@
 
 typedef enum { START, TYPE, EXPECT_ID, AFTER_ID, SKIP_INIT } ParserState;
 
-char *custom_types[MAX_CUSTOM_TYPES];
-int custom_type_count = 0;
-
 int is_type_keyword(const char *token);
 
 int is_custom_type(const char *token);

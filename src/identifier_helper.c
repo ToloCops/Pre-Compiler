@@ -1,5 +1,8 @@
 #include "identifier_helper.h"
 
+char *custom_types[MAX_CUSTOM_TYPES];
+int custom_type_count = 0;
+
 int is_type_keyword(const char *token) {
     const char *types[] = {
         "int", "char", "float", "double", "long", "short", "unsigned",
