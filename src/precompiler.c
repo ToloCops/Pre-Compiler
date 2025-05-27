@@ -45,13 +45,15 @@ void init_stats(Stats *stats)
         stats->input_file_lines = 0;
         stats->output_file_size = 0;
         stats->output_file_lines = 0;
+        stats->included_files = NULL; 
     }
 }
 
 /* Libera eventuali risorse allocate per le statistiche (attualmente non necessarie) */
 void free_stats(Stats *stats)
 {
-    (void)stats; // nessuna risorsa da liberare per ora
+    free_included_files(stats->included_files);
+    stats->included_files = NULL;
 }
 
 /* Stampa le statistiche sullo standard output */
@@ -67,6 +69,12 @@ void print_statistics(const Stats *stats)
     printf("Numero di file inclusi: %d\n", stats->num_included_files);
     printf("File di input: %ld byte, %d righe\n", stats->input_file_size, stats->input_file_lines);
     printf("File di output: %ld byte, %d righe\n", stats->output_file_size, stats->output_file_lines);
+
+    IncludedFile *file = stats->included_files;
+    while (file) {
+        printf("  %s: %ld bytes, %d lines\n", file->filename, file->size_bytes, file->num_lines);
+        file = file->next;
+    }
 }
 
 /*
@@ -74,7 +82,7 @@ void print_statistics(const Stats *stats)
    Se trova una direttiva #include, estrae il nome del file (da virgolette o angolari),
    apre il file e ne copia il contenuto al posto della direttiva.
 */
-char *process_includes(const char *code, Stats *stats, IncludedFile **included_files)
+char *process_includes(const char *code, Stats *stats)
 {
     size_t capacity = strlen(code) + 1;
     size_t length = 0;
@@ -156,29 +164,42 @@ char *process_includes(const char *code, Stats *stats, IncludedFile **included_f
             }
             if (found)
             {
-                if (is_file_already_included(*included_files, filename)) {
+                if (is_file_already_included(stats->included_files, filename)) {
                     continue;
                 }
-                add_included_file(included_files, filename);
                 FILE *fp = fopen(filename, "r");
                 if (fp)
                 {
-                    stats->num_included_files++;
                     fseek(fp, 0, SEEK_END);
                     long fsize = ftell(fp);
                     rewind(fp);
+
                     char *file_content = malloc(fsize + 1);
                     if (file_content)
                     {
                         size_t read_bytes = fread(file_content, 1, fsize, fp);
                         file_content[read_bytes] = '\0';
+
+                        int num_lines = 1;
+                        for (size_t i = 0; i < read_bytes; i++)
+                        {
+                            if (file_content[i] == '\n')
+                            {
+                                num_lines++;
+                            }
+                        }
+
+                        add_included_file(&stats->included_files, filename, fsize, num_lines);
+
+                        char *include_free = process_includes(file_content, stats);  // Process the included file recursively
+                        free(file_content);
+                        append_to_buffer(&result, &capacity, &length, include_free);
+                        free(include_free);
+                        append_to_buffer(&result, &capacity, &length, "\n");
+
+                        stats->num_included_files++;
                     }
                     fclose(fp);
-                    char *include_free = process_includes(file_content, stats, included_files);  // Process the included file recursively
-                    free(file_content);
-                    append_to_buffer(&result, &capacity, &length, include_free);
-                    free(include_free);
-                    append_to_buffer(&result, &capacity, &length, "\n");
                 }
                 else
                 {

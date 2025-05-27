@@ -21,7 +21,7 @@ int is_file_already_included(IncludedFile *list, const char *filename) {
     return 0;
 }
 
-void add_included_file(IncludedFile **list, const char *filename) {
+void add_included_file(IncludedFile **list, const char *filename, long size_bytes, int num_lines) {
     if (is_file_already_included(*list, filename)) {
         return; // Il file è già incluso
     }
@@ -31,6 +31,8 @@ void add_included_file(IncludedFile **list, const char *filename) {
         exit(EXIT_FAILURE);
     }
     new_file->filename = duplicate_string(filename);
+    new_file->size_bytes = size_bytes;
+    new_file->num_lines = num_lines;
     new_file->next = *list;
     *list = new_file;
 }

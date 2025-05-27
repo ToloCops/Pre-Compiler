@@ -23,6 +23,8 @@ typedef struct
     long output_file_size;
     int output_file_lines;
 
+    IncludedFile *included_files; 
+
 } Stats;
 
 void init_stats(Stats *stats);
@@ -31,7 +33,7 @@ void free_stats(Stats *stats);
 
 void print_statistics(const Stats *stats);
 
-char *process_includes(const char *code, Stats *stats, IncludedFile **included_files);
+char *process_includes(const char *code, Stats *stats);
 
 char *remove_comments(const char *code, Stats *stats);
 
