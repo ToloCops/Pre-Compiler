@@ -27,7 +27,7 @@ typedef struct
 
 } Stats;
 
-void init_stats(Stats *stats);
+void init_stats(Stats *stats, long input_file_size, int input_file_lines);
 
 void free_stats(Stats *stats);
 

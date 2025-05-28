@@ -83,10 +83,18 @@ int main(int argc, char *argv[])
     }
 
     code[file_size] = '\0';
+
+    int line_count = 1;
+    for (long i = 0; i < file_size; i++) {
+        if (code[i] == '\n') {
+            line_count++;
+        }
+    }
+
     fclose(fp);
 
     Stats stats;
-    init_stats(&stats);
+    init_stats(&stats, file_size, line_count);
 
     char *code_with_includes = process_includes(code, &stats);
     free(code);
@@ -95,6 +103,16 @@ int main(int argc, char *argv[])
     
     char *code_no_comments = remove_comments(code_with_includes, &stats);
     free(code_with_includes);
+
+    stats.output_file_size = strlen(code_no_comments);
+
+    int output_lines = 1;
+    for (char *p = code_no_comments; *p; ++p) {
+        if (*p == '\n') {
+            output_lines++;
+        }
+    }
+    stats.output_file_lines = output_lines;
 
     if (output_file)
     {

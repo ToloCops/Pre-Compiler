@@ -33,20 +33,20 @@ static void append_to_buffer(char **buffer, size_t *capacity, size_t *length, co
 }
 
 /* Inizializza la struttura delle statistiche */
-void init_stats(Stats *stats)
+void init_stats(Stats *stats, long input_file_size, int input_file_lines)
 {
-    if (stats)
-    {
-        stats->num_variables = 0;
-        stats->num_errors = 0;
-        stats->num_comment_lines_removed = 0;
-        stats->num_included_files = 0;
-        stats->input_file_size = 0;
-        stats->input_file_lines = 0;
-        stats->output_file_size = 0;
-        stats->output_file_lines = 0;
-        stats->included_files = NULL; 
-    }
+    if (!stats)
+        return;
+
+    stats->num_variables = 0;
+    stats->num_errors = 0;
+    stats->num_comment_lines_removed = 0;
+    stats->num_included_files = 0;
+    stats->input_file_size = input_file_size;
+    stats->input_file_lines = input_file_lines;
+    stats->output_file_size = 0;
+    stats->output_file_lines = 0;
+    stats->included_files = NULL;
 }
 
 /* Libera eventuali risorse allocate per le statistiche (attualmente non necessarie) */
@@ -62,19 +62,21 @@ void print_statistics(const Stats *stats)
     if (!stats)
         return;
 
-    printf("Statistiche di elaborazione:\n");
-    printf("Numero di variabili controllate: %d\n", stats->num_variables);
-    printf("Numero di errori rilevati: %d\n", stats->num_errors);
-    printf("Numero di righe di commento eliminate: %d\n", stats->num_comment_lines_removed);
-    printf("Numero di file inclusi: %d\n", stats->num_included_files);
-    printf("File di input: %ld byte, %d righe\n", stats->input_file_size, stats->input_file_lines);
-    printf("File di output: %ld byte, %d righe\n", stats->output_file_size, stats->output_file_lines);
-
+    printf("Pre-compilation statistics:\n");
+    printf("# of checked variables:     %d\n", stats->num_variables);
+    printf("# of errors detected:       %d\n", stats->num_errors);
+    printf("# of deleted comment lines: %d\n", stats->num_comment_lines_removed);
+    printf("# of included files:        %d\n", stats->num_included_files);
+    printf("Input file: %ld bytes, %d lines\n", stats->input_file_size, stats->input_file_lines);
+    
     IncludedFile *file = stats->included_files;
     while (file) {
-        printf("  %s: %ld bytes, %d lines\n", file->filename, file->size_bytes, file->num_lines);
+        printf("%s: %ld bytes, %d lines\n", file->filename, file->size_bytes, file->num_lines);
         file = file->next;
     }
+    
+    printf("Output file: %ld bytes, %d lines\n", stats->output_file_size, stats->output_file_lines);
+
 }
 
 /*
