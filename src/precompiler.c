@@ -197,7 +197,7 @@ char *process_includes(const char *code, Stats *stats)
                         free(file_content);
                         append_to_buffer(&result, &capacity, &length, include_free);
                         free(include_free);
-                        append_to_buffer(&result, &capacity, &length, "\n");
+                        //append_to_buffer(&result, &capacity, &length, "\n");
 
                         stats->num_included_files++;
                     }
@@ -256,7 +256,7 @@ char *remove_comments(const char *code, Stats *stats)
             stats->num_comment_lines_removed++;
             if (*p == '\n')
             {
-                append_to_buffer(&result, &capacity, &length, "\n");
+                //append_to_buffer(&result, &capacity, &length, "\n");
                 p++;
             }
         }
@@ -269,12 +269,17 @@ char *remove_comments(const char *code, Stats *stats)
                 if (*p == '\n')
                 {
                     stats->num_comment_lines_removed++;
-                    append_to_buffer(&result, &capacity, &length, "\n");
+                    //append_to_buffer(&result, &capacity, &length, "\n");
                 }
                 p++;
             }
-            if (*p)
+            if (*p) {
+                // prints character after "*/"
                 p += 2; // salta "*/"
+                while (*p == '\n' || *p == '\r') {
+                    p++; // salta newline
+                }
+            }
         }
         else
         {
