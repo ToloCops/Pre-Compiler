@@ -254,11 +254,12 @@ char *remove_comments(const char *code, Stats *stats)
             {
                 p++;
             }
-            stats->num_comment_lines_removed++;
             if (*p == '\n')
             {
                 if (code_line) {
                     append_to_buffer(&result, &capacity, &length, "\n");
+                } else {
+                    stats->num_comment_lines_removed++;
                 }
                 p++;
                 code_line = false;
@@ -281,6 +282,9 @@ char *remove_comments(const char *code, Stats *stats)
             if (*p) {
                 p += 2; // salta "*/"
                 while (*p == '\n' || *p == '\r') {
+                    if (*p == '\n') {
+                        stats->num_comment_lines_removed++;
+                    }
                     p++; // salta newline
                 }
                 if (code_line) {
