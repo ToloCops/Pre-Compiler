@@ -13,6 +13,6 @@ main()
     char *ciao;
     int validVar = 42;
     int xray = 100;                  // Errore: l'identificatore "x-ray" non è valido
-    char *message = "Hello, world!"; // Messaggio di esempio
+    char* message = "Hello, world!"; // Messaggio di esempio
     return 0;
 }
