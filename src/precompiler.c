@@ -244,6 +244,7 @@ char *remove_comments(const char *code, Stats *stats)
     result[0] = '\0';
 
     const char *p = code;
+    bool code_line = false;
     while (*p)
     {
         if (p[0] == '/' && p[1] == '/')
@@ -256,8 +257,11 @@ char *remove_comments(const char *code, Stats *stats)
             stats->num_comment_lines_removed++;
             if (*p == '\n')
             {
-                //append_to_buffer(&result, &capacity, &length, "\n");
+                if (code_line) {
+                    append_to_buffer(&result, &capacity, &length, "\n");
+                }
                 p++;
+                code_line = false;
             }
         }
         else if (p[0] == '/' && p[1] == '*')
@@ -270,20 +274,29 @@ char *remove_comments(const char *code, Stats *stats)
                 {
                     stats->num_comment_lines_removed++;
                     //append_to_buffer(&result, &capacity, &length, "\n");
+                    code_line = false;
                 }
                 p++;
             }
             if (*p) {
-                // prints character after "*/"
                 p += 2; // salta "*/"
                 while (*p == '\n' || *p == '\r') {
                     p++; // salta newline
                 }
+                if (code_line) {
+                    append_to_buffer(&result, &capacity, &length, "\n");
+                }
+                code_line = false;
             }
         }
         else
         {
             /* Carattere normale: copia */
+            if (*p == '\n' || *p == '\r') {
+                code_line = false;
+            } else {
+                code_line = true;
+            }
             char tmp[2] = {*p, '\0'};
             append_to_buffer(&result, &capacity, &length, tmp);
             p++;
