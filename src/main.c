@@ -102,7 +102,6 @@ int main(int argc, char *argv[])
     check_identifiers(code_with_includes, &stats);
     
     char *code_no_comments = remove_comments(code_with_includes, &stats);
-    //char *code_no_comments = code_with_includes;
     free(code_with_includes);
 
     stats.output_file_size = strlen(code_no_comments);

@@ -97,6 +97,7 @@ char *process_includes(const char *code, Stats *stats)
             len++;
         }
 
+        // Handle lines that are too long
         if (len >= sizeof(line)) {
             fprintf(stderr, "Warning (linea %d): linea troppo lunga, troncata a %zu caratteri:\n%.50s...\n", line_num, sizeof(line) - 1, line_start);
             strncpy(line, line_start, sizeof(line) - 1);
@@ -113,6 +114,7 @@ char *process_includes(const char *code, Stats *stats)
             pos++;
         }
 
+        // Check for #include directive
         if (strncmp(line, "#include", 8) == 0)
         {
             char filename[256];
@@ -154,6 +156,7 @@ char *process_includes(const char *code, Stats *stats)
             }
             if (found)
             {
+                // Avoid including the same file multiple times
                 if (is_file_already_included(stats->included_files, filename)) {
                     continue;
                 }
@@ -181,11 +184,11 @@ char *process_includes(const char *code, Stats *stats)
 
                         add_included_file(&stats->included_files, filename, fsize, num_lines);
 
+                        // Recursively process includes in the included file
                         char *include_free = process_includes(file_content, stats);  // Process the included file recursively
                         free(file_content);
                         append_to_buffer(&result, &capacity, &length, include_free);
                         free(include_free);
-                        //append_to_buffer(&result, &capacity, &length, "\n");
 
                         stats->num_included_files++;
                     }
@@ -193,11 +196,13 @@ char *process_includes(const char *code, Stats *stats)
                 }
                 else
                 {
+                    // Not a valid include, just copy the line
                     fprintf(stderr, "Error opening file to include: %s\n", filename);
                 }
             }
             else
             {
+                // Normal line, just copy
                 append_to_buffer(&result, &capacity, &length, line);
                 append_to_buffer(&result, &capacity, &length, "\n");
             }
@@ -230,7 +235,7 @@ char *remove_comments(const char *code, Stats *stats)
     {
         if (p[0] == '/' && p[1] == '/')
         {
-            // Inline comment: // skip until newline
+            // Inline comment: skip until newline
             while (*p && *p != '\n')
             {
                 p++;
@@ -255,18 +260,17 @@ char *remove_comments(const char *code, Stats *stats)
                 if (*p == '\n')
                 {
                     stats->num_comment_lines_removed++;
-                    //append_to_buffer(&result, &capacity, &length, "\n");
                     code_line = false;
                 }
                 p++;
             }
             if (*p) {
-                p += 2; // salta "*/"
+                p += 2; // Jump over "*/"
                 while (*p == '\n' || *p == '\r') {
                     if (*p == '\n') {
                         stats->num_comment_lines_removed++;
                     }
-                    p++; // salta newline
+                    p++; // Jump over newline
                 }
                 if (code_line) {
                     append_to_buffer(&result, &capacity, &length, "\n");
@@ -276,7 +280,7 @@ char *remove_comments(const char *code, Stats *stats)
         }
         else
         {
-            /* Carattere normale: copia */
+            // Normal code: copy character
             if (*p == '\n' || *p == '\r') {
                 code_line = false;
             } else {

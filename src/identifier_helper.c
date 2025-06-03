@@ -29,7 +29,6 @@ void add_custom_type(const char *token) {
     }
 }
 
-
 int is_type(const char *token) {
     return is_type_keyword(token) || is_custom_type(token);
 }
