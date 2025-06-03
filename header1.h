@@ -1,2 +1,2 @@
-/* header1.h: esempio di header */
+/* header1.h: */
 int foo();

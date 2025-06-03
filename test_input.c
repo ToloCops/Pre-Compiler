@@ -1,10 +1,10 @@
 #include "header1.h"
 #include <header2.h>
 
-// Questo è un commento in linea che deve essere rimosso
+// This is a single-line comment that should be removed
 
-/* Questo è un commento a blocchi
-che si estende su più righe e deve essere rimosso */
+/* This is a comment block 
+that uses multiple lines and should be removed */
 int ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss;
 int a = 0;
 
@@ -12,7 +12,7 @@ main()
 {
     char *ciao;
     int validVar = 42;
-    int x-ray = 100;               // Errore: l'identificatore "x-ray" non è valido
-    char *message = "Hello, world!"; // Messaggio di esempio
+    int x-ray = 100;               // Precompilation test, variable can't contain hyphen
+    char *message = "Hello, world!";
     return 0;
 }

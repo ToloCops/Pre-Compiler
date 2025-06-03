@@ -1,6 +1,5 @@
 #include "precompiler.h"
 
-/* Funzione ausiliaria: duplica una stringa usando malloc */
 static char *duplicate_string(const char *s)
 {
     if (!s)
@@ -12,9 +11,6 @@ static char *duplicate_string(const char *s)
     return dup;
 }
 
-/* Funzione ausiliaria per appendere una stringa in un buffer dinamico.
-   Il buffer e la sua capacità, insieme alla lunghezza corrente, vengono gestiti
-   per garantire spazio sufficiente. */
 static void append_to_buffer(char **buffer, size_t *capacity, size_t *length, const char *str)
 {
     size_t add_len = strlen(str);
@@ -32,7 +28,6 @@ static void append_to_buffer(char **buffer, size_t *capacity, size_t *length, co
     *length += add_len;
 }
 
-/* Inizializza la struttura delle statistiche */
 void init_stats(Stats *stats, long input_file_size, int input_file_lines)
 {
     if (!stats)
@@ -49,14 +44,12 @@ void init_stats(Stats *stats, long input_file_size, int input_file_lines)
     stats->included_files = NULL;
 }
 
-/* Libera eventuali risorse allocate per le statistiche (attualmente non necessarie) */
 void free_stats(Stats *stats)
 {
     free_included_files(stats->included_files);
     stats->included_files = NULL;
 }
 
-/* Stampa le statistiche sullo standard output */
 void print_statistics(const Stats *stats)
 {
     if (!stats)
@@ -79,11 +72,6 @@ void print_statistics(const Stats *stats)
 
 }
 
-/*
-   Funzione process_includes: analizza il codice riga per riga.
-   Se trova una direttiva #include, estrae il nome del file (da virgolette o angolari),
-   apre il file e ne copia il contenuto al posto della direttiva.
-*/
 char *process_includes(const char *code, Stats *stats)
 {
     size_t capacity = strlen(code) + 1;
@@ -210,14 +198,12 @@ char *process_includes(const char *code, Stats *stats)
             }
             else
             {
-                /* Se non viene trovato un filename, copia la riga così com'è */
                 append_to_buffer(&result, &capacity, &length, line);
                 append_to_buffer(&result, &capacity, &length, "\n");
             }
         }
         else
         {
-            /* Linea normale: copia nel risultato */
             append_to_buffer(&result, &capacity, &length, line);
             append_to_buffer(&result, &capacity, &length, "\n");
         }
@@ -226,11 +212,6 @@ char *process_includes(const char *code, Stats *stats)
     return result;
 }
 
-/*
-   Funzione remove_comments: rimuove i commenti dal codice.
-   Gestisce sia i commenti su singola linea (//) che quelli a blocchi (/* ... * /).
-   I newline vengono copiati per mantenere la corrispondenza delle righe.
-*/
 char *remove_comments(const char *code, Stats *stats)
 {
     size_t capacity = 1024;
@@ -248,7 +229,7 @@ char *remove_comments(const char *code, Stats *stats)
     {
         if (p[0] == '/' && p[1] == '/')
         {
-            /* Commento su singola linea: salta fino a newline */
+            // Inline comment: // skip until newline
             while (*p && *p != '\n')
             {
                 p++;
@@ -262,7 +243,7 @@ char *remove_comments(const char *code, Stats *stats)
         }
         else if (p[0] == '/' && p[1] == '*')
         {
-            /* Commento a blocchi: salta fino a "*\/", copiando i newline incontrati */
+            // Comment block: skip until "*/" copying newlines
             p += 2;
             while (*p && !(p[0] == '*' && p[1] == '/'))
             {
@@ -283,7 +264,7 @@ char *remove_comments(const char *code, Stats *stats)
         }
         else
         {
-            /* Carattere normale: copia */
+            // Normal character: append to result
             char tmp[2] = {*p, '\0'};
             append_to_buffer(&result, &capacity, &length, tmp);
             p++;
@@ -302,26 +283,22 @@ void check_identifiers(const char *code, Stats *stats) {
     for (const char *p = code; *p != '\0'; p++) {
         if (*p == '\n') line_number++;
 
-        // Costruzione del token
         if (isalnum(*p) || *p == '_' || *p == '-') {
             if (token_index < (int)sizeof(token) - 1)
                 token[token_index++] = *p;
             continue;
         }
 
-        // Puntatore come parte del tipo: lo ignoriamo nel nome ma influenzerà lo stato
         if (*p == '*') {
             if (state == TYPE) {
-                continue; // ignora ma resta in TYPE
+                continue;
             }
         }
 
-        // Fine token
         if (token_index > 0) {
             token[token_index] = '\0';
             token_index = 0;
 
-            // Gestione typedef
             if (strcmp(token, "typedef") == 0) {
                 in_typedef = 1;
                 state = TYPE;
@@ -356,12 +333,10 @@ void check_identifiers(const char *code, Stats *stats) {
 
                 case AFTER_ID:
                 case SKIP_INIT:
-                    // Ignora token in questi stati
                     break;
             }
         }
 
-        // Gestione simboli
         switch (*p) {
             case ';':
                 state = START;
